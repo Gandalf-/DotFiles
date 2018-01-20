@@ -97,7 +97,7 @@ class Handler(socketserver.BaseRequestHandler):
         db_server.output = []
         db_server.save_db()
 
-        print('query: ({t:4}) {a}'.format(t=end-start, a=str(args)))
+        print('query: ({t:4}) {a}'.format(t=end-start, a=str(args)[:50]))
 
 
 class Server(socketserver.TCPServer):
