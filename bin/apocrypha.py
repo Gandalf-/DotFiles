@@ -14,6 +14,7 @@ Apocrypha
 import json
 import pprint
 import sys
+import threading
 
 
 class ApocryphaError(Exception):
@@ -34,8 +35,13 @@ class Apocrypha(object):
         self.add_context = add_context
         self.flush = False
         self.headless = headless
-        self.output = []
+
+        data = threading.local()
+        data.output = []
+        self.output = data.output
+
         self.path = path
+        self.lock = threading.Lock()
 
         with open(path, 'r') as fd:
             self.db = json.load(fd)
@@ -63,12 +69,25 @@ class Apocrypha(object):
         Normalize and write out the database, but only if self.flush is True
         '''
 
+        self.lock.acquire()
+
         if self.flush:
             self.normalize(self.db)
 
             # write the updated values back out
             with open(self.path, 'w') as fd:
                 json.dump(self.db, fd, sort_keys=True)
+
+        self.lock.release()
+
+    def assign(self, base, left, right):
+        ''' dict, any, any -> none
+        '''
+        self.lock.acquire()
+
+        base[left] = right
+
+        self.lock.release()
 
     def _action(self, db, base, keys, create=False):
         ''' dict, dict, list of string -> bool
@@ -90,7 +109,7 @@ class Apocrypha(object):
                 # single = string, multi = list
                 right = right[0] if len(right) == 1 else right
 
-                last_base[left] = right
+                self.assign(last_base, left, right)
                 self.flush = True
                 return
 
@@ -104,15 +123,18 @@ class Apocrypha(object):
                     if len(right) == 1:
                         right = right[0]
 
-                    last_base[left] = right
+                    self.assign(last_base, left, right)
 
                 # value exists but not a list, create list and add
                 elif not isinstance(last_base[left], list):
-                    last_base[left] = [last_base[left]] + right
+                    # last_base[left] = [last_base[left]] + right
+                    self.assign(last_base, left, [last_base[left]] + right)
 
                 # add to existing list
                 else:
+                    self.lock.acquire()
                     last_base[left] += right
+                    self.lock.release()
 
                 self.flush = True
                 return
@@ -140,10 +162,12 @@ class Apocrypha(object):
                 if right:
 
                     if last_base:
-                        last_base[left] = right
+                        self.assign(last_base, left, right)
                     else:
                         # global overwrite
+                        self.lock.acquire()
                         self.db = right
+                        self.lock.release()
 
                     self.flush = True
                 return
@@ -153,7 +177,9 @@ class Apocrypha(object):
                 left = keys[i - 1]
                 right = keys[i + 1]
 
+                self.lock.acquire()
                 self.list_remove(left, right, last_base)
+                self.lock.release()
 
                 if len(last_base[left]) == 1:
                     last_base[left] = last_base[left][0]
@@ -168,7 +194,9 @@ class Apocrypha(object):
 
             # remove
             elif key == 'del':
+                self.lock.acquire()
                 del(last_base[keys[i - 1]])
+                self.lock.release()
 
                 self.flush = True
                 return

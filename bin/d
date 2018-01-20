@@ -5,6 +5,7 @@ import socket
 import subprocess
 import sys
 import time
+import select
 
 
 def edit_temp_file(temp_file):
@@ -30,9 +31,13 @@ def edit_temp_file(temp_file):
 def main():
     ''' string -> io
     '''
+    stdin = []
+    if select.select([sys.stdin], [], [], 0.0)[0]:
+        stdin = [sys.stdin.read()]
+
     edit_mode = False
     remote = ('localhost', 9999)
-    args = sys.argv[1:]
+    args = sys.argv[1:] + stdin
 
     if len(args) > 1 and args[-1] == 'edit':
         edit_mode = True

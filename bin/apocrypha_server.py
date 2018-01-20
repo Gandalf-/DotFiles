@@ -100,7 +100,7 @@ class Handler(socketserver.BaseRequestHandler):
         print('query: ({t:4}) {a}'.format(t=end-start, a=str(args)))
 
 
-class Server(socketserver.TCPServer):
+class Server(socketserver.ThreadingMixIn, socketserver.TCPServer):
     '''
     TCPServer that allows address reuse
     '''
