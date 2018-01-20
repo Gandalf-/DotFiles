@@ -283,7 +283,7 @@ class Apocrypha(object):
             base = context + ' = '
 
         # string
-        if isinstance(value, str):
+        if value and isinstance(value, str):
             if value[0] == '!':
                 value = value[1:]
                 self.dereference(value, [], False)
@@ -291,9 +291,9 @@ class Apocrypha(object):
                 result += [base + str(value)]
 
         # list
-        elif isinstance(value, list):
+        elif value and isinstance(value, list):
             for elem in value:
-                if elem[0] == '!':
+                if elem and elem[0] == '!':
                     elem = elem[1:]
                     self.dereference(elem, [], False)
                 else:
