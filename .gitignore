@@ -3,3 +3,4 @@ bin/wizard
 etc/gitconfig
 lib/fish/completions/w.fish
 __pycache__
+*.pyc
