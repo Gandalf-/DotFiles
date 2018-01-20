@@ -37,8 +37,13 @@ class Apocrypha(object):
         self.output = []
         self.path = path
 
-        with open(path, 'r') as fd:
-            self.db = json.load(fd)
+        try:
+            with open(path, 'r+') as fd:
+                self.db = json.load(fd)
+
+        except (json.decoder.JSONDecodeError, FileNotFoundError):
+            print('could not find valid db, creating new')
+            self.db = {}
 
     def action(self, args, read_only=False):
         ''' list of string, maybe bool -> none

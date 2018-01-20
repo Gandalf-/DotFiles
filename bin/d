@@ -39,7 +39,12 @@ def main():
         temp_file = '/tmp/apocrypha-' + '-'.join(args[:-1]) + '.json'
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect(remote)
+    try:
+        sock.connect(remote)
+
+    except ConnectionRefusedError:
+        print('error: could not connect to server')
+        sys.exit(1)
 
     query = '\n'.join(args) + '\n'
     sock.sendall(query.encode('utf-8'))

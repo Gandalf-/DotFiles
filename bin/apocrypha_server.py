@@ -42,13 +42,13 @@ class ApocryphaServer(apocrypha.Apocrypha):
 
 
 class Handler(socketserver.BaseRequestHandler):
-    """
+    '''
     The request handler class for our server.
 
     It is instantiated once per connection to the server, and must
     override the handle() method to implement communication to the
     client.
-    """
+    '''
     def handle(self):
         ''' none -> none
 
@@ -107,8 +107,8 @@ class Server(socketserver.TCPServer):
     allow_reuse_address = True
 
 
-if __name__ == "__main__":
-    host, port = "localhost", 9999
+if __name__ == '__main__':
+    host, port = '0.0.0.0', 9999
 
     # create the ApocryphaServer instance
     db_server = ApocryphaServer(db_path)
