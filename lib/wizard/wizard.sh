@@ -7,6 +7,18 @@
 #   All the intermediary functions are produced by auto_cli.sh
 
 
+wizard_engine_read() {
+  d engine result --pop
+}
+
+wizard_engine_show() {
+  d engine suggestion
+}
+
+wizard_engine_take() {
+  common::do "$(d engine suggestion)"
+}
+
 wizard_switch() {
 
   local selection; selection="$(wizard show projects | fzf --cycle)"

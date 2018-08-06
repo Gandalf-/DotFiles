@@ -1,2 +1,75 @@
-#!/bin/sh
+#!/bin/bash
 
+set -o pipefail
+
+context=''
+
+
+engine::git-status() {
+
+  context="$( git rev-parse --show-toplevel )" || return
+  git -c color.status=always status | grep -v use
+}
+
+engine::commit-summary() {
+  context="$( git rev-parse --show-toplevel )" || return
+
+  local status; status="$( git status )"
+
+  has-changes-to-commit() {
+    grep -q 'Changes to be committed' <<< "$status"
+  }
+
+  all-changes-staged() {
+    ! grep -q 'Changes not staged' <<< "$status"
+  }
+
+  has-changes-to-commit || return
+  all-changes-staged || return
+
+  save "git commit -m \"$( git status --porcelain | awk '{print $2}' | xargs)\""
+}
+
+
+save() {
+  d engine suggestion = "$*"
+}
+
+show() {
+
+  output="$( eval "$@" 2>/dev/null )" || return
+
+  current_sha="$( sha1sum <<< "$output" )"
+  previous_sha="$( d engine hashes "$context" "$@" )"
+
+  if [[ "$current_sha" != "$previous_sha" ]]; then
+
+    d engine result = "$output"
+
+    # update entry, exit since we only show one thing per run
+    d engine hashes "$context" "$@" = "$current_sha"
+    exit 0
+  fi
+
+  context=''
+}
+
+
+main() {
+
+  while read -r name; do
+
+    case $name in
+      engine::*)
+        show "$name"
+        ;;
+    esac
+
+  done < <(declare -F | awk '{print $3}')
+}
+
+(
+  flock -n 11 || exit 0
+  main
+  sleep 5
+) 11> /dev/shm/engine.lock &
